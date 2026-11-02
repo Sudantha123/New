@@ -1,25 +1,37 @@
-name: Check Pre-installed FFmpeg
+name: Test Fast FFmpeg Setup
 
 on:
   workflow_dispatch:
 
 jobs:
-  check-ffmpeg:
+  test-setup-ffmpeg-action:
+    name: Method 1 - setup-ffmpeg action
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check FFmpeg Location & Version
-        run: |
-          echo "=== FFmpeg Path ==="
-          which ffmpeg || echo "FFmpeg not found!"
-          
-          echo -e "\n=== FFmpeg Version ==="
-          ffmpeg -version | head -n 3
+      - name: Setup FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check Codec Support (x264, x265, AAC)
+      - name: Verify FFmpeg & Codecs
         run: |
-          echo "=== Video Encoders ==="
-          ffmpeg -hide_banner -encoders | grep -E "libx264|libx265" || echo "x264/x265 missing"
-          
-          echo -e "\n=== Audio Encoders ==="
-          ffmpeg -hide_banner -encoders | grep -E "aac" || echo "AAC missing"
+          which ffmpeg
+          ffmpeg -version | head -n 2
+          echo "=== Encoders ==="
+          ffmpeg -hide_banner -encoders | grep -E "libx264|libx265|aac"
+
+  test-static-binary:
+    name: Method 2 - Static Binary Download
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download & Extract Static FFmpeg
+        run: |
+          curl -sL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz | tar -xJ --strip-components=1 -C /tmp
+          sudo mv /tmp/ffmpeg /tmp/ffprobe /usr/local/bin/
+
+      - name: Verify FFmpeg & Codecs
+        run: |
+          which ffmpeg
+          ffmpeg -version | head -n 2
+          echo "=== Encoders ==="
+          ffmpeg -hide_banner -encoders | grep -E "libx264|libx265|aac"
