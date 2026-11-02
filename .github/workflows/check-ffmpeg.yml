@@ -1,0 +1,25 @@
+name: Check Pre-installed FFmpeg
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-ffmpeg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check FFmpeg Location & Version
+        run: |
+          echo "=== FFmpeg Path ==="
+          which ffmpeg || echo "FFmpeg not found!"
+          
+          echo -e "\n=== FFmpeg Version ==="
+          ffmpeg -version | head -n 3
+
+      - name: Check Codec Support (x264, x265, AAC)
+        run: |
+          echo "=== Video Encoders ==="
+          ffmpeg -hide_banner -encoders | grep -E "libx264|libx265" || echo "x264/x265 missing"
+          
+          echo -e "\n=== Audio Encoders ==="
+          ffmpeg -hide_banner -encoders | grep -E "aac" || echo "AAC missing"
